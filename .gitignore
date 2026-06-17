@@ -1,0 +1,9 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+models/*.pkl
+data/raw/*.csv
+data/processed/*.csv
+.streamlit/
