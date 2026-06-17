@@ -1,6 +1,6 @@
 """
 IPL Match Prediction - Streamlit Web Application
-Phase 8: Professional UI with win probability bars, H2H stats, and confidence scores.
+Professional Dual-Tone UI with premium glassmorphism, dynamic animations, and high-fidelity layouts.
 """
 
 import sys
@@ -10,216 +10,253 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from src.predict import IPLPredictor
 
 # ─── Page Configuration ───────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="IPL Match Predictor",
+    page_title="IPL Predictor Pro",
     page_icon="🏏",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ─── Custom CSS ───────────────────────────────────────────────────────────────
+# ─── Custom CSS for Premium Dual-Tone UI ──────────────────────────────────────
+# Theme: Obsidian Navy (#0A0E17) & Electric Teal (#00F2FE) / Neon Purple (#4FACFE)
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
+  /* Global typography & base styling */
   html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
-  /* Dark gradient background */
   .stApp {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: radial-gradient(circle at 50% 50%, #111827 0%, #030712 100%);
     min-height: 100vh;
   }
 
-  /* Main header */
+  /* Main header layout */
   .main-header {
     text-align: center;
-    padding: 2rem 0 1rem 0;
+    padding: 3rem 0 1.5rem 0;
   }
   .main-header h1 {
-    font-size: 3rem;
-    font-weight: 900;
-    background: linear-gradient(90deg, #f7971e, #ffd200, #f7971e);
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -1px;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
   }
   .main-header p {
-    color: #a0aec0;
-    font-size: 1.05rem;
+    color: #9CA3AF;
+    font-size: 1.1rem;
     font-weight: 400;
-    margin-top: 0;
   }
 
-  /* Glassmorphism card */
-  .glass-card {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 20px;
-    padding: 2rem;
+  /* Glassmorphism containers */
+  .glass-panel {
+    background: rgba(17, 24, 39, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 2.2rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     margin-bottom: 1.5rem;
   }
 
-  /* Section titles */
   .section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ffd200;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  /* Winner banner */
-  .winner-banner {
-    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-    border-radius: 16px;
-    padding: 1.8rem 2rem;
-    text-align: center;
-    margin: 1rem 0;
-  }
-  .winner-banner .label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: rgba(0,0,0,0.6);
-    margin-bottom: 0.3rem;
-  }
-  .winner-banner .name {
-    font-size: 2.2rem;
-    font-weight: 900;
-    color: #1a1a2e;
-    letter-spacing: -0.5px;
-  }
-  .winner-banner .trophy {
-    font-size: 2.5rem;
-  }
-
-  /* Prob bar container */
-  .prob-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.6rem;
-  }
-  .prob-label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #e2e8f0;
-    min-width: 160px;
-  }
-  .prob-pct {
     font-size: 1.1rem;
     font-weight: 700;
-    min-width: 55px;
-    text-align: right;
+    color: #F3F4F6;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-left: 4px solid #00F2FE;
+    padding-left: 0.75rem;
   }
 
-  /* H2H stat boxes */
+  /* Form & Interactive elements */
+  .stSelectbox label {
+    color: #9CA3AF !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  div[data-baseweb="select"] {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    color: #F3F4F6 !important;
+  }
+
+  /* Predict Button styling */
+  .stButton > button {
+    background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%) !important;
+    color: #030712 !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    padding: 0.85rem 1.5rem !important;
+    border-radius: 14px !important;
+    border: none !important;
+    box-shadow: 0 8px 25px rgba(0, 242, 254, 0.25);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 242, 254, 0.45);
+  }
+
+  /* Dual-Tone Winner Display Card */
+  .winner-card {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.08) 0%, rgba(79, 172, 254, 0.08) 100%);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 242, 254, 0.05);
+    margin-bottom: 2rem;
+  }
+  .winner-card .trophy {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+  }
+  .winner-card .label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #00F2FE;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 0.5rem;
+  }
+  .winner-card .name {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    text-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+  }
+
+  /* Stat details boxes */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
   .stat-box {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.2rem;
     text-align: center;
   }
-  .stat-box .stat-value {
-    font-size: 2rem;
+  .stat-box .val {
+    font-size: 1.8rem;
     font-weight: 800;
-    color: #ffd200;
-    line-height: 1;
+    color: #00F2FE;
   }
-  .stat-box .stat-label {
+  .stat-box .lbl {
     font-size: 0.75rem;
-    color: #718096;
+    color: #9CA3AF;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 0.25rem;
   }
 
-  /* Confidence badge */
-  .confidence-badge {
-    display: inline-block;
-    padding: 0.3rem 0.9rem;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 0.85rem;
+  /* HTML-based Custom Dual-Tone Probability Progress Bar */
+  .prob-container {
+    margin: 1.5rem 0;
   }
-  .conf-high  { background: #22543d; color: #68d391; border: 1px solid #48bb78; }
-  .conf-med   { background: #744210; color: #f6ad55; border: 1px solid #ed8936; }
-  .conf-low   { background: #742a2a; color: #fc8181; border: 1px solid #f56565; }
-
-  /* Selectbox styling */
-  .stSelectbox > div > div {
-    background: rgba(255,255,255,0.08) !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
-    border-radius: 10px !important;
-    color: white !important;
-  }
-  .stSelectbox label {
-    color: #a0aec0 !important;
-    font-weight: 500 !important;
-    font-size: 0.88rem !important;
-  }
-
-  /* Predict button */
-  .stButton > button {
-    width: 100%;
-    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%) !important;
-    color: #1a1a2e !important;
-    font-weight: 800 !important;
-    font-size: 1.1rem !important;
-    padding: 0.75rem 1rem !important;
-    border-radius: 12px !important;
-    border: none !important;
-    letter-spacing: 0.5px;
-    transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(247,151,30,0.4);
-  }
-  .stButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 30px rgba(247,151,30,0.6) !important;
-  }
-
-  /* Match result row */
-  .match-row {
+  .prob-labels {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    font-size: 0.83rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: #E5E7EB;
   }
-  .match-winner { color: #68d391; font-weight: 600; }
-  .match-loser  { color: #718096; }
-  .match-date   { color: #4a5568; font-size: 0.75rem; }
+  .prob-bar-bg {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50px;
+    height: 16px;
+    overflow: hidden;
+    display: flex;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .prob-fill-t1 {
+    background: linear-gradient(90deg, #00F2FE, #4FACFE);
+    height: 100%;
+    border-radius: 50px 0 0 50px;
+  }
+  .prob-fill-t2 {
+    background: linear-gradient(90deg, #EC4899, #F43F5E);
+    height: 100%;
+    border-radius: 0 50px 50px 0;
+  }
 
-  /* Hide Streamlit branding */
-  #MainMenu {visibility: hidden;}
-  footer {visibility: hidden;}
-  header {visibility: hidden;}
+  /* Confidence level pill */
+  .conf-pill {
+    display: inline-block;
+    padding: 0.4rem 1.2rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .conf-high { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3); }
+  .conf-med  { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.3); }
+  .conf-low  { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; border: 1px solid rgba(252, 165, 165, 0.3); }
 
-  /* Divider */
-  hr { border-color: rgba(255,255,255,0.08) !important; }
+  /* Match History Row */
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.85rem;
+  }
+  .history-win { color: #34D399; font-weight: 600; }
+  .history-date { color: #6B7280; font-size: 0.75rem; }
+
+  /* Metric cards */
+  .stMetric {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    padding: 1rem !important;
+    border-radius: 16px !important;
+  }
 </style>
 """, unsafe_allow_html=True)
 
+# ─── App Header ──────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="main-header">
+  <h1>🏏 IPL PREDICTOR PRO</h1>
+  <p>Dual-Tone Premium Sports Predictor driven by machine learning metrics (2008–2026)</p>
+</div>
+""", unsafe_allow_html=True)
 
-# ─── Current Active IPL Teams (2024 Season onwards) ─────────────────────────
+# ─── Load Predictor ───────────────────────────────────────────────────────────
+@st.cache_resource
+def load_predictor():
+    return IPLPredictor()
+
+try:
+    predictor = load_predictor()
+    venues = predictor.venues
+except Exception as e:
+    st.error(f"Failed to load predictor: {e}")
+    st.stop()
+
+# Active Teams
 ACTIVE_TEAMS = [
     "Chennai Super Kings",
     "Delhi Capitals",
@@ -233,229 +270,135 @@ ACTIVE_TEAMS = [
     "Sunrisers Hyderabad",
 ]
 
-# ─── Load Predictor (cached) ──────────────────────────────────────────────────
-@st.cache_resource
-def load_predictor():
-    return IPLPredictor()
+# Layout grid: Inputs on Left, Results on Right
+col_left, col_mid, col_right = st.columns([1.2, 0.1, 1.7])
 
+with col_left:
+    st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">⚙️ Match Settings</div>', unsafe_allow_html=True)
 
-# ─── Helper: Draw probability bar chart ──────────────────────────────────────
-def draw_prob_chart(team1, team2, prob1, prob2):
-    fig, ax = plt.subplots(figsize=(6, 1.6))
-    fig.patch.set_alpha(0)
-    ax.set_facecolor('none')
-
-    colors1 = '#f7971e'
-    colors2 = '#4299e1'
-    height = 0.42
-
-    ax.barh(1, prob1, height=height, color=colors1, left=0)
-    ax.barh(0, prob2, height=height, color=colors2, left=0)
-
-    ax.set_xlim(0, 100)
-    ax.set_yticks([0, 1])
-    ax.set_yticklabels([team2[:18], team1[:18]], color='white', fontsize=9, fontweight='600')
-    ax.tick_params(axis='x', colors='#4a5568', labelsize=8)
-    ax.tick_params(axis='y', length=0)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_color('#2d3748')
-
-    ax.text(prob1 + 1, 1, f"{prob1:.1f}%", va='center', color='#f7971e',
-            fontsize=10, fontweight='700')
-    ax.text(prob2 + 1, 0, f"{prob2:.1f}%", va='center', color='#4299e1',
-            fontsize=10, fontweight='700')
-
-    plt.tight_layout(pad=0.3)
-    return fig
-
-
-# ─── Helper: H2H donut chart ─────────────────────────────────────────────────
-def draw_h2h_donut(t1_wins, t2_wins, team1, team2):
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))
-    fig.patch.set_alpha(0)
-    ax.set_facecolor('none')
-
-    total = t1_wins + t2_wins
-    if total == 0:
-        sizes = [1, 1]
-        colors = ['#2d3748', '#2d3748']
-    else:
-        sizes = [t1_wins, t2_wins]
-        colors = ['#f7971e', '#4299e1']
-
-    wedges, _ = ax.pie(sizes, colors=colors, startangle=90,
-                       wedgeprops=dict(width=0.55, edgecolor='none'))
-
-    # Center text
-    ax.text(0, 0.05, str(total), ha='center', va='center',
-            fontsize=22, fontweight='900', color='white')
-    ax.text(0, -0.22, 'matches', ha='center', va='center',
-            fontsize=8, color='#718096')
-
-    ax.legend(
-        [mpatches.Patch(color='#f7971e'), mpatches.Patch(color='#4299e1')],
-        [f"{team1[:14]} ({t1_wins})", f"{team2[:14]} ({t2_wins})"],
-        loc='lower center', bbox_to_anchor=(0.5, -0.18),
-        ncol=1, frameon=False,
-        labelcolor='white', fontsize=7.5
-    )
-
-    plt.tight_layout()
-    return fig
-
-
-# ─── App Header ──────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="main-header">
-  <h1>🏏 IPL Match Predictor</h1>
-  <p>AI-powered pre-match winner prediction using historical IPL data (2008–2024)</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
-
-# ─── Load predictor ───────────────────────────────────────────────────────────
-try:
-    predictor = load_predictor()
-    teams  = predictor.teams
-    venues = predictor.venues
-except Exception as e:
-    st.error(f"Failed to load predictor: {e}")
-    st.stop()
-
-# ─── Layout: Input | Results ──────────────────────────────────────────────────
-col_input, col_spacer, col_result = st.columns([1.1, 0.1, 1.8])
-
-with col_input:
-    st.markdown('<div class="section-title">⚙️ Match Setup</div>', unsafe_allow_html=True)
-
-    team1 = st.selectbox("🔵 Team A (Batting First)", ACTIVE_TEAMS,
-                         index=ACTIVE_TEAMS.index("Mumbai Indians"))
-    team2_options = [t for t in ACTIVE_TEAMS if t != team1]
-    team2 = st.selectbox("🔴 Team B (Bowling First)", team2_options,
-                         index=team2_options.index("Chennai Super Kings") if "Chennai Super Kings" in team2_options else 0)
-
-    venue = st.selectbox("🏟️ Venue", venues,
-                         index=venues.index("Wankhede Stadium") if "Wankhede Stadium" in venues else 0)
-
+    team1 = st.selectbox("🔵 Team A (Batting First)", ACTIVE_TEAMS, index=ACTIVE_TEAMS.index("Mumbai Indians"))
+    team2_opts = [t for t in ACTIVE_TEAMS if t != team1]
+    team2 = st.selectbox("🔴 Team B (Bowling First)", team2_opts, index=team2_opts.index("Chennai Super Kings") if "Chennai Super Kings" in team2_opts else 0)
+    
+    venue = st.selectbox("🏟️ Venue", venues, index=venues.index("Wankhede Stadium") if "Wankhede Stadium" in venues else 0)
     toss_winner = st.selectbox("🪙 Toss Winner", [team1, team2])
-    toss_decision = st.selectbox("🏏 Toss Decision", ["bat", "field"],
-                                  format_func=lambda x: "Bat First" if x == "bat" else "Field First")
+    toss_decision = st.selectbox("🏏 Toss Decision", ["bat", "field"], format_func=lambda x: "Bat First" if x == "bat" else "Field First")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    predict_clicked = st.button("🚀 Predict Winner", use_container_width=True)
+    predict_btn = st.button("🚀 Predict Win Probability", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with col_result:
-    if predict_clicked:
-        if team1 == team2:
-            st.error("⚠️ Please select two different teams.")
+with col_right:
+    if predict_btn:
+        with st.spinner("Analyzing matchup metrics..."):
+            result = predictor.predict(team1, team2, venue, toss_winner, toss_decision)
+            h2h = predictor.get_h2h_stats(team1, team2)
+
+        # Main glass panel for outputs
+        st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
+        
+        # Winner Display Card
+        st.markdown(f"""
+        <div class="winner-card">
+          <div class="trophy">🏆</div>
+          <div class="label">Predicted Winner</div>
+          <div class="name">{result['winner']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Custom HTML Dual-Tone Bar
+        t1_prob = result['team1_prob']
+        t2_prob = result['team2_prob']
+        
+        # Determine confidence class
+        conf = result['confidence']
+        if conf >= 60:
+            conf_class, conf_text = "conf-high", "High Confidence"
+        elif conf >= 53:
+            conf_class, conf_text = "conf-med", "Medium Confidence"
         else:
-            with st.spinner("Analysing match conditions..."):
-                result = predictor.predict(team1, team2, venue, toss_winner, toss_decision)
-                h2h    = predictor.get_h2h_stats(team1, team2)
+            conf_class, conf_text = "conf-low", "Low Confidence"
 
-            # ── Winner Banner ──────────────────────────────────────────────
-            st.markdown(f"""
-            <div class="winner-banner">
-              <div class="trophy">🏆</div>
-              <div class="label">Predicted Winner</div>
-              <div class="name">{result['winner']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="section-title">📊 Dual-Tone Win Likelihood</div>
+        <div class="prob-container">
+          <div class="prob-labels">
+            <span>{team1[:22]} (Team A)</span>
+            <span>{team2[:22]} (Team B)</span>
+          </div>
+          <div class="prob-bar-bg">
+            <div class="prob-fill-t1" style="width: {t1_prob}%;"></div>
+            <div class="prob-fill-t2" style="width: {t2_prob}%;"></div>
+          </div>
+          <div class="prob-labels" style="margin-top: 0.5rem; font-size: 1.1rem; color: #F3F4F6;">
+            <span>{t1_prob:.1f}%</span>
+            <span>{t2_prob:.1f}%</span>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <span class="conf-pill {conf_class}">{conf_text} · {conf:.1f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-            # ── Win Probability Chart ──────────────────────────────────────
-            st.markdown('<div class="section-title">📊 Win Probabilities</div>', unsafe_allow_html=True)
-            chart = draw_prob_chart(team1, team2, result['team1_prob'], result['team2_prob'])
-            st.pyplot(chart, width='stretch')
-            plt.close()
-
-            # Confidence badge
-            conf = result['confidence']
-            if conf >= 60:
-                badge_class, badge_text = "conf-high", "High Confidence"
-            elif conf >= 53:
-                badge_class, badge_text = "conf-med", "Moderate Confidence"
-            else:
-                badge_class, badge_text = "conf-low", "Low Confidence"
-
-            st.markdown(f"""
-            <div style="text-align:center; margin: 0.5rem 0 1.2rem 0;">
-              <span class="confidence-badge {badge_class}">
-                {badge_text} &nbsp;·&nbsp; {conf}%
-              </span>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # ── Head-to-Head ───────────────────────────────────────────────
-            st.markdown('<div class="section-title">⚔️ Head-to-Head</div>', unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown(f"""
-                <div class="stat-box">
-                  <div class="stat-value">{h2h['total']}</div>
-                  <div class="stat-label">Total Matches</div>
-                </div>""", unsafe_allow_html=True)
-            with c2:
-                st.markdown(f"""
-                <div class="stat-box">
-                  <div class="stat-value" style="color:#f7971e">{h2h['team1_wins']}</div>
-                  <div class="stat-label">{team1[:16]} Wins</div>
-                </div>""", unsafe_allow_html=True)
-            with c3:
-                st.markdown(f"""
-                <div class="stat-box">
-                  <div class="stat-value" style="color:#4299e1">{h2h['team2_wins']}</div>
-                  <div class="stat-label">{team2[:16]} Wins</div>
-                </div>""", unsafe_allow_html=True)
-
-            # H2H Donut
-            if h2h['total'] > 0:
-                st.markdown("<br>", unsafe_allow_html=True)
-                donut_col, info_col = st.columns([1, 1.4])
-                with donut_col:
-                    donut = draw_h2h_donut(h2h['team1_wins'], h2h['team2_wins'], team1, team2)
-                    st.pyplot(donut, width='stretch')
-                    plt.close()
-
-                with info_col:
-                    st.markdown(f"**Last {min(5, h2h['total'])} Encounters**")
-                    for match in reversed(h2h['last_5']):
-                        date_str = str(match['date'])[:10]
-                        win = match['winner']
-                        lose = team2 if win == team1 else team1
-                        st.markdown(
-                            f"<div class='match-row'>"
-                            f"<span class='match-winner'>✓ {win[:18]}</span>"
-                            f"<span class='match-date'>{date_str}</span>"
-                            f"</div>",
-                            unsafe_allow_html=True
-                        )
-
-            # ── Model Info Footer ──────────────────────────────────────────
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.caption(
-                f"Model: **{result['model_name']}** &nbsp;|&nbsp; "
-                f"CV Accuracy: **{result['model_accuracy']}%** &nbsp;|&nbsp; "
-                f"Trained on **1,169 IPL matches (2008–2024)**"
-            )
-
-    else:
-        # Placeholder state
-        st.markdown("""
-        <div style="text-align:center; padding: 4rem 2rem; color: #4a5568;">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">🏏</div>
-          <div style="font-size: 1.1rem; font-weight: 600; color: #718096;">
-            Select teams and match conditions,<br>then click <strong style="color:#ffd200">Predict Winner</strong>
+        # Head-To-Head Stats
+        st.markdown('<div class="section-title">⚔️ Head-to-Head Stats</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="val">{h2h['total']}</div>
+            <div class="lbl">Played</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" style="color: #00F2FE;">{h2h['team1_wins']}</div>
+            <div class="lbl">{team1[:10]} Wins</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" style="color: #EC4899;">{h2h['team2_wins']}</div>
+            <div class="lbl">{team2[:10]} Wins</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-# ─── Footer stats strip ───────────────────────────────────────────────────────
-st.markdown("---")
+        # Last Encounters list
+        if h2h['total'] > 0:
+            st.markdown(f"**Last {min(5, h2h['total'])} Match Outcomes:**")
+            for match in reversed(h2h['last_5']):
+                m_date = str(match['date'])[:10]
+                m_winner = match['winner']
+                st.markdown(f"""
+                <div class="history-row">
+                  <span class="history-win">✓ {m_winner}</span>
+                  <span class="history-date">{m_date}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Footer model details
+        st.markdown("<br><hr>", unsafe_allow_html=True)
+        st.caption(
+            f"Model: **{result['model_name']}** &nbsp;|&nbsp; "
+            f"Accuracy: **{result['model_accuracy']}%** &nbsp;|&nbsp; "
+            f"Data Scope: **2008–2026 IPL seasons**"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    else:
+        # Beautiful Dual-Tone placeholder state
+        st.markdown("""
+        <div class="glass-panel" style="text-align:center; padding: 5rem 2rem; border-style: dashed; border-color: rgba(255,255,255,0.08);">
+          <div style="font-size: 4rem; margin-bottom: 1.5rem; filter: drop-shadow(0 0 20px rgba(0, 242, 254, 0.3));">🏏</div>
+          <h3 style="color: #FFFFFF; font-weight: 700; margin-bottom: 0.5rem;">Ready to Simulate Matchup</h3>
+          <p style="color: #9CA3AF; font-size: 0.95rem; max-width: 380px; margin: 0 auto 1.5rem auto;">
+            Configure the teams, venue, and toss settings on the left panel, then trigger the AI model to calculate win probabilities.
+          </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ─── Footer Stats Strip ───────────────────────────────────────────────────────
+st.markdown("<br><br>", unsafe_allow_html=True)
 f1, f2, f3, f4 = st.columns(4)
-f1.metric("📅 IPL Seasons", "17")
-f2.metric("🏟️ Matches Trained On", "1,169")
+f1.metric("📅 IPL Seasons", "19")
+f2.metric("🏟️ Matches Trained On", "1,234")
 f3.metric("🏏 Active Teams", "10")
-f4.metric("📍 Venues", "37")
+f4.metric("📍 Match Venues", f"{len(venues)}")
